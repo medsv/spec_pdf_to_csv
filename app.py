@@ -16,7 +16,7 @@ st.title("📄 Конвертер спецификаций рабочей док
 st.markdown("Загрузите PDF-файл спецификации для её перевода в формат CSV.")
 
 # 1. Загрузка файла
-uploaded_file = st.file_uploader("Выберите PDF файл или перетащите на поле ниже", type=["pdf"])
+uploaded_file = st.file_uploader("Выберите PDF файл или мышкой перетащите его сюда", type=["pdf"])
 
 if uploaded_file is not None:
     st.info(f"Загружен файл: **{uploaded_file.name}** ({uploaded_file.size / 1024:.1f} КБ)")
