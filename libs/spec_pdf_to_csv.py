@@ -9,8 +9,8 @@ def spec_pdf_to_csv(filename):
         spec = parse_spec(doc)
     base_name, _ = os.path.splitext(filename)
     csv_filename = base_name + ".csv"
-    with open(csv_filename, 'w', newline='', encoding='utf-8-sig'; quoting=csv.QUOTE_ALL) as f:
-        writer = csv.writer(f, delimiter=';')
+    with open(csv_filename, 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f, delimiter=';'; quoting=csv.QUOTE_ALL)
         writer.writerows(spec)
 
 def parse_spec(doc):
