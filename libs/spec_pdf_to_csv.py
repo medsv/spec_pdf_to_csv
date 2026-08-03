@@ -11,7 +11,7 @@ def spec_pdf_to_csv(filename):
     csv_filename = base_name + ".csv"
     with open(csv_filename, 'w', newline='', encoding='utf-8-sig') as f:
         #writer = csv.writer(f, delimiter=';', quoting=csv.QUOTE_ALL)
-        writer = csv.writer(f, delimiter=';')
+        writer = csv.writer(f, delimiter='\t')
         writer.writerows(spec)
 
 def parse_spec(doc):
