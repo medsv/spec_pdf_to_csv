@@ -9,7 +9,7 @@ def spec_pdf_to_csv(filename):
         spec = parse_spec(doc)
     base_name, _ = os.path.splitext(filename)
     csv_filename = base_name + ".csv"
-    with open(csv_filename, 'w', newline='', encoding='utf-8-sig') as f:
+    with open(csv_filename, 'w', newline='', encoding='utf-8-sig'; quoting=csv.QUOTE_ALL) as f:
         writer = csv.writer(f, delimiter=';')
         writer.writerows(spec)
 
@@ -63,7 +63,7 @@ def clean_text(text):
     if not isinstance(text, str):
         return text
     # Замена символов перевода строки на пробел
-    text = text.replace('\n', ' ')
+    #text = text.replace('\n', ' ')
     # Удаление множественных пробелов (один или более пробелов заменяем на один)
     text = re.sub(r' +', ' ', text)
     # Удаление пробелов в начале и конце (опционально)
