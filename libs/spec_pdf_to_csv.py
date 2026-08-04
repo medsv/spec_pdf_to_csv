@@ -24,7 +24,7 @@ def parse_spec(doc):
             in_spec = False  # не дошёл до спецификации
             lines = tab.extract()
             for line in lines:
-                #print(line)
+                print(line)
                 if not in_spec:
                     if "Примечание" in line or "Примечания" in line:  # шапка таблицы спецификации
                         spec_line_cols_count = len(line)  # количество столбцов в pdf-таблице спецификации
