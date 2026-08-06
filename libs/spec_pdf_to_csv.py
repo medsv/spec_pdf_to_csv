@@ -1,30 +1,33 @@
 import pymupdf
 import re
-import csv
-import os
+#import csv
+#import os
 
 
-def spec_pdf_to_csv(filename):
+def spec_pdf_to_row_list(filename):
     with pymupdf.open(filename) as doc:
         spec = parse_spec(doc)
+    return spec
+    """
     base_name, _ = os.path.splitext(filename)
     csv_filename = base_name + ".csv"
     with open(csv_filename, 'w', newline='', encoding='utf-8-sig') as f:
         #writer = csv.writer(f, delimiter=';', quoting=csv.QUOTE_ALL)
         writer = csv.writer(f, delimiter=';')
         writer.writerows(spec)
+    """
 
 def parse_spec(doc):
     spec = []
     first_table = True
     for page in doc:
         tabs = page.find_tables() # locate and extract any tables on page
-        if tabs == 0: continue
+        if not tabs: continue
         for tab in tabs:
             in_spec = False  # не дошёл до спецификации
             lines = tab.extract()
             for line in lines:
-                print(line)
+                #print(line)
                 if not in_spec:
                     if "Примечание" in line or "Примечания" in line:  # шапка таблицы спецификации
                         spec_line_cols_count = len(line)  # количество столбцов в pdf-таблице спецификации
