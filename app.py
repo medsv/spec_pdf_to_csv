@@ -1,7 +1,9 @@
-import streamlit as st
 import os
 import tempfile
+from io import BytesIO
 from pathlib import Path
+
+import streamlit as st
 from openpyxl import load_workbook
 from openpyxl.styles import Border, Side
 
@@ -15,74 +17,71 @@ st.set_page_config(
     layout="centered",
 )
 
-st.title("📄 Конвертер спецификаций рабочей документации (PDF -> EXLS)")
-st.markdown("Загрузите PDF-файл спецификации для её перевода в формат EXLS.")
-
 # Путь к шаблону спецификации
 TEMPLATE_PATH = Path("templates") / "Шаблон_спецификации_РД.xlsx"
 
+st.title("📄 Конвертер спецификаций рабочей документации (PDF -> XLSX)")
+st.markdown("Загрузите PDF-файл спецификации для её перевода в формат XLSX.")
 
-def spec_to_xlsx(spec, pdf_file_name):
-    """Формирует xlsx-файл спецификации на базе шаблона.
+
+def build_xlsx_bytes(spec, pdf_stem, template_path):
+    """Формирует xlsx-файл спецификации на базе шаблона и возвращает его в виде байтов.
+
     spec: список строк спецификации (список списков).
-    pdf_file_name: имя исходного pdf-файла (строка), используется для имени результата.
+    pdf_stem: имя исходного pdf-файла без расширения, используется в качестве заголовка A1.
+    template_path: путь к xlsx-файлу шаблона спецификации.
     """
-    if not TEMPLATE_PATH.exists():
-        raise FileNotFoundError(f"Шаблон спецификации не найден: {TEMPLATE_PATH}")
+    if not template_path.exists():
+        raise FileNotFoundError(f"Шаблон спецификации не найден: {template_path}")
 
-    output_path = Path(pdf_file_name).with_suffix(".xlsx")
-
-    wb = load_workbook(TEMPLATE_PATH)
+    wb = load_workbook(template_path)
     ws = wb.active
     if ws is None:
         raise ValueError("Не удалось получить активный лист из шаблона")
 
-    ws["A1"] = Path(pdf_file_name).stem
+    ws["A1"] = pdf_stem
     thin = Side(style="thin", color="000000")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
-    for row_idx, row_values in enumerate(spec, start=3):
+    for row_idx, row_values in enumerate(spec, start=2):
         for col_idx, value in enumerate(row_values, start=1):
             cell = ws.cell(row=row_idx, column=col_idx, value=value)
             cell.border = border
 
-    wb.save(output_path)
-    return output_path
+    buffer = BytesIO()
+    wb.save(buffer)
+    return buffer.getvalue()
 
 
 # 1. Загрузка файла
-uploaded_file = st.file_uploader(
-    "Выберите PDF файл или мышкой перетащите его сюда", type=["pdf"]
+pdf_file = st.file_uploader(
+    "Выберите PDF файл, нажав Upload, или перетащите его сюда мышкой ", type=["pdf"]
 )
 
-if uploaded_file is not None:
-    st.info(f"Загружен файл: **{uploaded_file.name}** ({uploaded_file.size / 1024:.1f} КБ)")
-
-    tmp_pdf_path = None
-    tmp_xlsx_path = None
-
-    # Создаем временный PDF-файл
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
-        tmp_pdf.write(uploaded_file.getvalue())
-        tmp_pdf_path = tmp_pdf.name
+if pdf_file is not None:
+    st.info(f"Загружен файл: **{pdf_file.name}** ({pdf_file.size / 1024:.1f} КБ)")
 
     # 2. Кнопка запуска обработки
-    if st.button("🚀 Извлечь данные и сформировать EXLS", type="primary"):
+    if st.button("🚀 Извлечь данные и сформировать XLSX", type="primary"):
         with st.spinner("Идёт анализ PDF ... Пожалуйста, подождите."):
+            pdf_path = None
             try:
-                spec = spec_pdf_to_row_list(tmp_pdf_path)
-                output_path = spec_to_xlsx(spec, uploaded_file.name)
-                tmp_xlsx_path = output_path
+                # Сохраняем PDF во временный файл (нужен pymupdf)
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+                    tmp_pdf.write(pdf_file.getvalue())
+                    pdf_path = tmp_pdf.name
+
+                spec = spec_pdf_to_row_list(pdf_path)
+                xlsx_bytes = build_xlsx_bytes(spec, Path(pdf_file.name).stem, TEMPLATE_PATH)
+                xlsx_name = Path(pdf_file.name).with_suffix(".xlsx").name
+
                 st.success("✅ Файл успешно обработан!")
 
                 # 3. Кнопка скачивания
-                with open(output_path, "rb") as f:
-                    xlsx_bytes = f.read()
-
                 st.download_button(
                     label="📥 Скачать Excel файл",
                     data=xlsx_bytes,
-                    file_name=output_path.name,
+                    file_name=xlsx_name,
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     type="primary",
                 )
@@ -92,13 +91,12 @@ if uploaded_file is not None:
                 st.exception(e)
 
             finally:
-                # 4. Очистка временных файлов
-                for path in (tmp_pdf_path, tmp_xlsx_path):
-                    if path:
-                        try:
-                            os.remove(path)
-                        except OSError:
-                            pass
+                # 4. Очистка временного PDF-файла
+                if pdf_path:
+                    try:
+                        os.remove(pdf_path)
+                    except OSError:
+                        pass
 
 else:
     st.warning("Пожалуйста, загрузите PDF файл для начала работы.")
