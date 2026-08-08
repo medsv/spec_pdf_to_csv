@@ -1,14 +1,11 @@
 import os
 import tempfile
-from io import BytesIO
 from pathlib import Path
 
 import streamlit as st
-from openpyxl import load_workbook
-from openpyxl.styles import Border, Side
 
 # Импортируем вашу библиотеку
-from libs.spec_pdf_to_csv import spec_pdf_to_row_list
+from libs.spec_pdf_to_csv import pdf_spec_to_row_list, row_list_to_xlsx_bytes
 
 # Настройки страницы
 st.set_page_config(
@@ -22,35 +19,6 @@ TEMPLATE_PATH = Path("templates") / "Шаблон_спецификации_РД.
 
 st.title("📄 Конвертер спецификаций рабочей документации (PDF -> XLSX)")
 st.markdown("Загрузите PDF-файл спецификации для её перевода в формат XLSX.")
-
-
-def build_xlsx_bytes(spec, pdf_stem, template_path):
-    """Формирует xlsx-файл спецификации на базе шаблона и возвращает его в виде байтов.
-
-    spec: список строк спецификации (список списков).
-    pdf_stem: имя исходного pdf-файла без расширения, используется в качестве заголовка A1.
-    template_path: путь к xlsx-файлу шаблона спецификации.
-    """
-    if not template_path.exists():
-        raise FileNotFoundError(f"Шаблон спецификации не найден: {template_path}")
-
-    wb = load_workbook(template_path)
-    ws = wb.active
-    if ws is None:
-        raise ValueError("Не удалось получить активный лист из шаблона")
-
-    ws["A1"] = pdf_stem
-    thin = Side(style="thin", color="000000")
-    border = Border(left=thin, right=thin, top=thin, bottom=thin)
-
-    for row_idx, row_values in enumerate(spec, start=2):
-        for col_idx, value in enumerate(row_values, start=1):
-            cell = ws.cell(row=row_idx, column=col_idx, value=value)
-            cell.border = border
-
-    buffer = BytesIO()
-    wb.save(buffer)
-    return buffer.getvalue()
 
 
 # 1. Загрузка файла
@@ -71,8 +39,8 @@ if pdf_file is not None:
                     tmp_pdf.write(pdf_file.getvalue())
                     pdf_path = tmp_pdf.name
 
-                spec = spec_pdf_to_row_list(pdf_path)
-                xlsx_bytes = build_xlsx_bytes(spec, Path(pdf_file.name).stem, TEMPLATE_PATH)
+                spec = pdf_spec_to_row_list(pdf_path)
+                xlsx_bytes = row_list_to_xlsx_bytes(spec, Path(pdf_file.name).stem, TEMPLATE_PATH)
                 xlsx_name = Path(pdf_file.name).with_suffix(".xlsx").name
 
                 st.success("✅ Файл успешно обработан!")
