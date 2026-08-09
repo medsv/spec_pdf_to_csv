@@ -14,6 +14,7 @@ def pdf_spec_to_row_list(pdf_path):
 
 def parse_spec(doc):
     spec = []
+    prev_spec_line = None
     first_table = True
     for page in doc:
         tabs = page.find_tables()  # locate and extract any tables on page
@@ -42,9 +43,10 @@ def parse_spec(doc):
                     if len(line) != spec_line_cols_count or None in [line[i] for i in pattern]: continue  # игнорируем строки, набор столбцов которых не соответствует ранее зафиксированному набору для мпецификации
                     spec_line = [line[i] for i in pattern]
                     if all(cell == '' for cell in spec_line): continue  # Все столбцы содержат ''
-                    normalize_row(spec_line)
+                    normalize_row(spec_line, prev_spec_line)
                     if spec_line == ['1', '2', '3', '4', '5', '6', '7', '8', '9']: continue  # ['1', '2', '3', '4', '5', '6', '7', '8', '9'] игнорируем
                     spec.append(spec_line)
+                    prev_spec_line = spec_line
                     # spec.append(normalize_row(line[first_index: last_index+1]))
     if spec == []:
         raise ValueError("В файле спецификация не найдена")
@@ -65,7 +67,7 @@ def detect_pattern(line):
     # return [i for i, col in enumerate(line) if col not in ('', None)] # быстрее на 10–30%
 
 
-def normalize_row(spec_line):
+def normalize_row(spec_line, prev_spec_line):
     """Очищает строку: заменяет удаляет лишние пробелы."""
     for col in spec_line:
         if not isinstance(col, str):
@@ -84,7 +86,8 @@ def normalize_row(spec_line):
     # Меняем точку на запятую в Кол-во и Ед. масса
     spec_line[6].replace('.', ',')
     spec_line[7].replace('.', ',')
-
+    if spec_line[1].lower() == "то же":
+         spec_line[1] = prev_spec_line[1]
 
 
 
