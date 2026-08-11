@@ -4,12 +4,11 @@ from pathlib import Path
 
 import streamlit as st
 
-# Импортируем вашу библиотеку
 from libs.spec_pdf_to_csv import pdf_spec_to_row_list, row_list_to_xlsx_bytes
 
 # Настройки страницы
 st.set_page_config(
-    page_title="Конвертер спецификаций PDF в XLSX",
+    page_title="Конвертер спецификаций рабочей документации из PDF в XLSX",
     page_icon="📄",
     layout="centered",
 )
@@ -17,20 +16,20 @@ st.set_page_config(
 # Путь к шаблону спецификации
 TEMPLATE_PATH = Path("templates") / "Шаблон_спецификации_РД.xlsx"
 
-st.title("📄 Конвертер спецификаций рабочей документации (PDF -> XLSX)")
-st.markdown("Загрузите PDF-файл спецификации для её перевода в формат XLSX.")
+st.title("📄 Спецификация: PDF → XLSX")
+#st.markdown("Загрузите PDF-файл спецификации для её перевода в формат XLSX.")
 
 
 # 1. Загрузка файла
 pdf_file = st.file_uploader(
-    "Выберите PDF файл, нажав Upload, или перетащите его сюда мышкой ", type=["pdf"]
+    "Выберите PDF файл, нажав Upload, или перетащите его сюда из Проводника мышкой ", type=["pdf"]
 )
 
 if pdf_file is not None:
     st.info(f"Загружен файл: **{pdf_file.name}** ({pdf_file.size / 1024:.1f} КБ)")
 
     # 2. Кнопка запуска обработки
-    if st.button("🚀 Извлечь данные и сформировать XLSX", type="primary"):
+    if st.button("🚀 Извлечь данные из PDF и сформировать XLSX", type="primary"):
         with st.spinner("Идёт анализ PDF ... Пожалуйста, подождите."):
             pdf_path = None
             try:
@@ -47,7 +46,7 @@ if pdf_file is not None:
 
                 # 3. Кнопка скачивания
                 st.download_button(
-                    label="📥 Скачать Excel файл",
+                    label="📥 Скачать XLSX файл",
                     data=xlsx_bytes,
                     file_name=xlsx_name,
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -56,7 +55,7 @@ if pdf_file is not None:
 
             except Exception as e:
                 st.error(f"❌ Произошла ошибка при обработке файла: {e}")
-                st.exception(e)
+                #st.exception(e)
 
             finally:
                 # 4. Очистка временного PDF-файла
@@ -67,7 +66,7 @@ if pdf_file is not None:
                         pass
 
 else:
-    st.warning("Пожалуйста, загрузите PDF файл для начала работы.")
+    st.warning("Загрузите PDF файл спецификации для начала работы.")
 
 st.markdown(
     """
