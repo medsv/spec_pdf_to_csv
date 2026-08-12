@@ -22,14 +22,17 @@ def parse_spec(doc):
             in_spec = False  # не дошёл до спецификации
             lines = tab.extract()
             for line in lines:
+                if len(line) < 9: continue
                 #print(line)
                 if not in_spec:
-                    if "Примечание" in line or "Код продукции" in line:  # шапка таблицы спецификации
+                    #if "Примечание" in line or "Код продукции" in line:  # шапка таблицы спецификации
+                    if any("примечани" in str(s).lower().strip() for s in line):  # шапка таблицы спецификации
                         spec_line_cols_count = len(line)  # количество столбцов в pdf-таблице спецификации
                         pattern = detect_pattern(line)  # шаблон таблицы спецификации
                         spec_col_count = len(pattern)
                         if spec_col_count != 9:
-                            raise ValueError(f"В спецификации должно быть 9 столбцов, а не {spec_col_count}")
+                            continue
+                            #raise ValueError(f"В спецификации должно быть 9 столбцов, а не {spec_col_count}")
                         if first_table:  # только для первой шапки таблицы
                             spec.append(gost_spec_title())  # добавляем в спецификацию шапку по ГОСТ 21.110-2013
                             pass
@@ -41,8 +44,8 @@ def parse_spec(doc):
                     if len(line) != spec_line_cols_count or None in [line[i] for i in pattern]: continue  # игнорируем строки, набор столбцов которых не соответствует ранее зафиксированному набору для мпецификации
                     spec_line = [line[i] for i in pattern]
                     if all(cell == '' for cell in spec_line): continue  # Все столбцы содержат ''
-                    normalize_row(spec_line, prev_spec_line)
                     if spec_line == ['1', '2', '3', '4', '5', '6', '7', '8', '9']: continue  # ['1', '2', '3', '4', '5', '6', '7', '8', '9'] игнорируем
+                    normalize_row(spec_line, prev_spec_line)
                     spec.append(spec_line)
                     prev_spec_line = spec_line
                     # spec.append(normalize_row(line[first_index: last_index+1]))

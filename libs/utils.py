@@ -29,11 +29,28 @@ def normalize_row(spec_line, prev_spec_line):
     spec_line[2] = re.sub(r'ГОСТ(\d)', r'ГОСТ \1', spec_line[2])
     # Приводим единицу измерения к стандартному обозначению
     spec_line[5] = normalize_unit(spec_line[5])
+    # Преобразовываем str в int или float
+    spec_line[6] = string_to_number(spec_line[6])
+    spec_line[7] = string_to_number(spec_line[7])
     # Меняем точку на запятую в Кол-во и Ед. масса
-    spec_line[6] = spec_line[6].replace('.', ',')
-    spec_line[7] = spec_line[7].replace('.', ',')
+    #spec_line[6] = spec_line[6].replace('.', ',')
+    #spec_line[7] = spec_line[7].replace('.', ',')
     if spec_line[1].lower() == "то же":
          spec_line[1] = prev_spec_line[1]
+
+def string_to_number(col: str | None):
+    if col is None:
+        return None
+    s = str(col).strip().replace(",", ".")
+    if not s:
+        return s
+    try:
+        return int(s)
+    except ValueError:
+        try:
+            return float(s)
+        except ValueError:
+            return s
 
 def normalize_unit(unit: str) -> str:
     """
