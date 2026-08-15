@@ -22,8 +22,8 @@ def pdf_spec_to_row_list(pdf_path):
                     continue
                     
                 json_table_data = block.get('table', {})
-                if json_table_data.get('col_count', 0) != cols_count: 
-                    continue
+                #if json_table_data.get('col_count', 0) != cols_count: 
+                #    continue
                 if json_table_data.get('row_count', 0) < 2: 
                     continue
                     
