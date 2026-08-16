@@ -4,7 +4,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from libs.spec_pdf_to_csv import pdf_spec_to_row_list, row_list_to_xlsx_bytes
+from libs.spec_pdf_to_xlsx import pdf_spec_to_row_list, row_list_to_xlsx_bytes
 
 # Настройки страницы
 st.set_page_config(
@@ -22,7 +22,7 @@ st.title("📄 Спецификация: PDF → XLSX")
 
 # 1. Загрузка файла
 pdf_file = st.file_uploader(
-    "Выберите PDF файл, нажав Upload, или перетащите его сюда из Проводника мышкой ", type=["pdf"]
+    "Выберите PDF файл, нажав Upload, или перетащите его сюда мышкой из Проводника", type=["pdf"]
 )
 
 if pdf_file is not None:

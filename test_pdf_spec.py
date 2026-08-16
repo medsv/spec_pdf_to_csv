@@ -10,8 +10,8 @@ import sys
 import pprint
 from pathlib import Path
 
-from libs.spec_pdf_to_csv import pdf_spec_to_row_list
-from libs.spec_pdf_to_csv import row_list_to_md
+from libs.spec_pdf_to_xlsx import pdf_spec_to_row_list
+from libs.spec_pdf_to_xlsx import row_list_to_md
 
 
 def main(pdf_path: str) -> None:

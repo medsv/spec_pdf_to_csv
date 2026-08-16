@@ -3,6 +3,8 @@ from copy import copy
 from io import BytesIO
 from openpyxl import load_workbook
 from libs.utils import normalize_row, gost_spec_title
+from openpyxl.styles import PatternFill
+
 
 def pdf_spec_to_row_list(pdf_path):
     """Извлекает из pdf-файла спецификации список строк спецификации."""
@@ -124,6 +126,12 @@ def row_list_to_xlsx_bytes(spec, pdf_stem, template_path):
         ws.auto_filter.ref = f"A2:I{last_row}"
     else:
         ws.auto_filter.ref = "A2:I2"
+
+    # 5. Закрашиваем красным пустые ячейки в столбце "Наименование"
+    for row_idx in range(3, last_row + 1):
+        cell = ws.cell(row=row_idx, column=2)
+        if not cell.value:
+            cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
 
     buffer = BytesIO()
     wb.save(buffer)
