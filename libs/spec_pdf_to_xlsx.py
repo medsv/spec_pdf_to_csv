@@ -28,7 +28,8 @@ def parse_spec(doc):
                 #print(line)
                 if not in_spec:
                     #if "Примечание" in line or "Код продукции" in line:  # шапка таблицы спецификации
-                    if any("примечани" in str(s).lower().strip() for s in line):  # шапка таблицы спецификации
+                    if any("примечани" in str(s).lower().strip() for s in line) or \
+                        all(str(dig) in line for dig in range(1,10)): # шапка таблицы спецификации
                         spec_line_cols_count = len(line)  # количество столбцов в pdf-таблице спецификации
                         pattern = detect_pattern(line)  # шаблон таблицы спецификации
                         spec_col_count = len(pattern)
