@@ -2,7 +2,7 @@ import pymupdf
 from copy import copy
 from io import BytesIO
 from openpyxl import load_workbook
-from libs.utils import normalize_row, gost_spec_title
+from libs.utils import normalize_row, gost_spec_title, correct_row
 from openpyxl.styles import PatternFill
 
 
@@ -14,8 +14,11 @@ def pdf_spec_to_row_list(pdf_path):
 
 def parse_spec(doc):
     spec = []
+    spec_row_count = 0
+    restored_rows: dict[int, list[int]] = {}
     prev_spec_line = None
     first_table = True
+    template_cols_count = 9  # по умолчанию табдица по ГОСТ
     for page in doc:
         tabs = page.find_tables()  # locate and extract any tables on page
         if not tabs:
@@ -24,37 +27,45 @@ def parse_spec(doc):
             in_spec = False  # не дошёл до спецификации
             lines = tab.extract()
             for line in lines:
-                if len(line) < 9: continue
+                if len(line) < template_cols_count: continue
                 #print(line)
                 if not in_spec:
                     #if "Примечание" in line or "Код продукции" in line:  # шапка таблицы спецификации
                     if any("приме" in str(s).lower().strip() for s in line) or \
-                        all(str(dig) in line for dig in range(1,10)): # шапка таблицы спецификации
-                        spec_line_cols_count = len(line)  # количество столбцов в pdf-таблице спецификации
+                            all(str(dig) in line for dig in range(1,10)): # шапка таблицы спецификации
+                        template_cols_count = 9
+                        #if any("kks" in str(s).lower().strip() for s in line): template_cols_count = 10
+                        spec_line_cols_count = len(line)  # количество столбцов в pdf-таблице представления спецификации
                         pattern = detect_pattern(line)  # шаблон таблицы спецификации
                         spec_col_count = len(pattern)
-                        if spec_col_count != 9:
+                        if spec_col_count != template_cols_count:
                             continue
                             #raise ValueError(f"В спецификации должно быть 9 столбцов, а не {spec_col_count}")
                         if first_table:  # только для первой шапки таблицы
                             spec.append(gost_spec_title())  # добавляем в спецификацию шапку по ГОСТ 21.110-2013
-                            pass
+                            spec_row_count += 1
                         in_spec = True # внутри спецификации
                         first_table = False
                         continue
                 if in_spec:
                     # if None in line[first_index: last_index+1]: break
-                    if len(line) != spec_line_cols_count or None in [line[i] for i in pattern]: continue  # игнорируем строки, набор столбцов которых не соответствует ранее зафиксированному набору для мпецификации
+                    if len(line) != spec_line_cols_count or None in [line[i] for i in pattern]: continue  # игнорируем строки, набор столбцов которых не соответствует ранее зафиксированному набору для cпецификации
+                    restored_cols = correct_row(line, pattern)
                     spec_line = [line[i] for i in pattern]
                     if all(cell == '' for cell in spec_line): continue  # Все столбцы содержат ''
                     if spec_line == ['1', '2', '3', '4', '5', '6', '7', '8', '9']: continue  # ['1', '2', '3', '4', '5', '6', '7', '8', '9'] игнорируем
+
+                    
                     normalize_row(spec_line, prev_spec_line)
                     spec.append(spec_line)
+                    spec_row_count += 1
+                    if restored_cols:
+                        restored_rows[spec_row_count] = restored_cols
                     prev_spec_line = spec_line
                     # spec.append(normalize_row(line[first_index: last_index+1]))
     if spec == []:
         raise ValueError("В файле спецификация не найдена")
-    return spec
+    return spec, restored_rows
 
 
 def detect_pattern(line):
@@ -71,7 +82,7 @@ def detect_pattern(line):
     # return [i for i, col in enumerate(line) if col not in ('', None)] # быстрее на 10–30%
 
 
-def row_list_to_xlsx_bytes(spec, pdf_stem, template_path):
+def row_list_to_xlsx_bytes(spec, restored_rows, pdf_stem, template_path):
     """Формирует xlsx-файл спецификации на базе шаблона и возвращает его в виде байтов."""
     if not template_path.exists():
         raise FileNotFoundError(f"Шаблон спецификации не найден: {template_path}")
@@ -133,6 +144,12 @@ def row_list_to_xlsx_bytes(spec, pdf_stem, template_path):
         cell = ws.cell(row=row_idx, column=2)
         if not cell.value:
             cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+
+    # 6. Закрашиваем жёлтым ячейки, которые были восстановлены из "битой" табличной строки
+    for row_idx, row_values in restored_rows.items():
+        for col_idx in row_values:
+            cell = ws.cell(row=row_idx+1, column=col_idx+1)
+            cell.fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
 
     buffer = BytesIO()
     wb.save(buffer)

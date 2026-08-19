@@ -35,8 +35,18 @@ def normalize_row(spec_line, prev_spec_line):
     # Меняем точку на запятую в Кол-во и Ед. масса
     #spec_line[6] = spec_line[6].replace('.', ',')
     #spec_line[7] = spec_line[7].replace('.', ',')
-    if spec_line[1].lower() == "то же":
+    if spec_line[1].lower().strip() in ["то же", "тоже"]:
          spec_line[1] = prev_spec_line[1]
+
+def correct_row(line, pattern):
+    restored_cols: list[int] = []
+    for i, idx in enumerate(pattern[:-1]):  # до предпоследнего
+        if not line[idx]:
+            if idx+1 == pattern[i+1]: continue
+            if line[idx+1]: 
+                line[idx] = line[idx+1]
+                restored_cols.append(i)  # индексы восстановленных ячеек
+    return restored_cols
 
 def string_to_number(col: str | None):
     if col is None:

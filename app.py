@@ -38,8 +38,8 @@ if pdf_file is not None:
                     tmp_pdf.write(pdf_file.getvalue())
                     pdf_path = tmp_pdf.name
 
-                spec = pdf_spec_to_row_list(pdf_path)
-                xlsx_bytes = row_list_to_xlsx_bytes(spec, Path(pdf_file.name).stem, TEMPLATE_PATH)
+                spec, restored_rows = pdf_spec_to_row_list(pdf_path)
+                xlsx_bytes = row_list_to_xlsx_bytes(spec, restored_rows, Path(pdf_file.name).stem, TEMPLATE_PATH)
                 xlsx_name = Path(pdf_file.name).with_suffix(".xlsx").name
 
                 st.success("✅ Файл успешно обработан!")
